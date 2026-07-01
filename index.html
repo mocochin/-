@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>現場負荷管理</title>
+<style>
+:root {
+  --bg:     #0f1219;
+  --surf:   #171b28;
+  --surf2:  #1e2234;
+  --bdr:    #252a3c;
+  --text:   #dde1ef;
+  --muted:  #555e7a;
+  --accent: #5b8dee;
+  --ok:     #27bd72;
+  --warn:   #f5a623;
+  --danger: #e8443a;
+  --r:      10px;
+  --font:   'Hiragino Sans','Meiryo','Yu Gothic UI',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;display:flex;flex-direction:column;}
+
+/* HEADER */
+header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14px 8px;flex-shrink:0;display:flex;align-items:center;gap:8px;}
+.logo{font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--accent);white-space:nowrap;}
+.hdate{font-size:11px;color:var(--muted);flex:1;text-align:right;}
+
+/* STRIP */
+.strip{background:var(--surf);border-bottom:2px solid var(--bdr);display:flex;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+.strip::-webkit-scrollbar{display:none;}
+.kpi{flex:1 0 64px;padding:7px 8px 6px;text-align:center;border-right:1px solid var(--bdr);}
+.kpi:last-child{border-right:none;}
+.kv{font-size:20px;font-weight:800;line-height:1;letter-spacing:-.02em;}
+.kl{font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:.05em;}
+.kpi.c-acc .kv{color:var(--accent);}
+.kpi.c-ok  .kv{color:var(--ok);}
+.kpi.c-wr  .kv{color:var(--warn);}
+.kpi.c-dng .kv{color:var(--danger);}
+
+/* TABS */
+.tabs{display:flex;background:var(--surf2);border-bottom:1px solid var(--bdr);flex-shrink:0;}
+.tab{flex:1;padding:9px 4px 8px;border:none;background:none;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.04em;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.pane{display:none;padding:10px 12px 20px;}
+.pane.on{display:block;}
+
+/* SECTION LABEL */
+.sec-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:14px 0 6px;padding-left:2px;}
+.sec-label:first-child{margin-top:0;}
+
+/* ---- ORDER CARD ---- */
+.ocard{
+  background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:12px 13px;margin-bottom:8px;position:relative;
+  transition:box-shadow .15s,transform .15s;
+}
+.ocard.dragging{opacity:.4;}
+.ocard.drag-over{box-shadow:0 0 0 2px var(--accent);transform:scale(1.01);}
+.ocard.s-alert{border-left:3px solid var(--danger);background:rgba(232,68,58,.04);}
+.ocard.s-ok   {border-left:3px solid var(--ok);}
+
+/* card top */
+.ctop{display:flex;align-items:flex-start;gap:8px;}
+.drag-handle{
+  flex-shrink:0;color:var(--muted);font-size:16px;cursor:grab;
+  padding:2px 4px 2px 0;line-height:1;user-select:none;touch-action:none;
+}
+.drag-handle:active{cursor:grabbing;}
+.cinfo{flex:1;min-width:0;}
+.crow1{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
+.cname{font-size:15px;font-weight:700;}
+.cprod{font-size:11px;color:var(--muted);margin-top:2px;}
+.cassign{font-size:11px;color:var(--accent);margin-top:1px;}
+
+/* priority badge */
+.pnum{
+  flex-shrink:0;width:24px;height:24px;border-radius:50%;
+  background:var(--surf2);border:1px solid var(--bdr);
+  font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  color:var(--muted);
+}
+.pnum.p1{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* alert badge */
+.abadge{
+  flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.07em;
+  padding:3px 8px;border-radius:4px;white-space:nowrap;margin-top:2px;
+}
+.ab-alert{background:rgba(232,68,58,.18);color:var(--danger);}
+.ab-ok   {background:rgba(39,189,114,.14);color:var(--ok);}
+
+/* schedule info */
+.sched-box{
+  margin-top:10px;padding:8px 10px;
+  background:var(--bg);border-radius:6px;
+  font-size:11px;line-height:1.8;
+}
+.sched-row{display:flex;gap:8px;}
+.sched-row .sl{color:var(--muted);white-space:nowrap;}
+.sched-row .sv{font-weight:600;}
+.sv.danger{color:var(--danger);}
+.sv.ok    {color:var(--ok);}
+.sv.warn  {color:var(--warn);}
+
+/* progress bar */
+.prog-wrap{background:var(--bdr);border-radius:3px;height:4px;overflow:hidden;margin-top:9px;}
+.prog-fill{height:100%;border-radius:3px;}
+
+/* progress input */
+.prog-row{display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid var(--bdr);}
+.prog-row label{font-size:10px;color:var(--muted);white-space:nowrap;}
+.pi{flex:1;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;color:var(--text);font-size:14px;padding:5px 8px;outline:none;-moz-appearance:textfield;}
+.pi::-webkit-inner-spin-button{display:none;}
+.pi:focus{border-color:var(--accent);}
+.pu{font-size:11px;color:var(--muted);}
+
+/* memo */
+.memo-box{margin-top:8px;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-all;line-height:1.6;padding:6px 8px;background:var(--bg);border-radius:5px;}
+
+/* actions */
+.actions{display:flex;gap:6px;margin-top:10px;}
+.btn-s{flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.03em;}
+.bd {background:rgba(39,189,114,.14);color:var(--ok);  border:1px solid rgba(39,189,114,.28);}
+.be {background:rgba(91,141,238,.13);color:var(--accent);border:1px solid rgba(91,141,238,.28);}
+.bx {background:rgba(232,68,58,.11); color:var(--danger);border:1px solid rgba(232,68,58,.22);}
+
+/* GAUGE */
+.g-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:11px 13px;margin-bottom:8px;}
+.g-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.g-lbl{font-size:13px;font-weight:600;flex:1;}
+.g-val{font-size:11px;color:var(--muted);white-space:nowrap;}
+.g-track{background:var(--bg);border-radius:4px;height:9px;overflow:hidden;}
+.g-fill{height:100%;border-radius:4px;}
+.g-sub{font-size:9px;color:var(--muted);margin-top:3px;}
+.g-items{margin-top:5px;}
+.g-item{font-size:10px;padding:2px 0;border-bottom:1px solid var(--bdr);display:flex;gap:6px;}
+.g-item:last-child{border-bottom:none;}
+.g-ih{color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.g-in{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* FORM */
+.form-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:14px;}
+.form-card h2{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;}
+.field{margin-bottom:10px;}
+.field label{display:block;font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.04em;}
+.field input,.field textarea{width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;color:var(--text);font-size:14px;padding:9px 11px;outline:none;font-family:var(--font);transition:border-color .15s;}
+.field input:focus,.field textarea:focus{border-color:var(--accent);}
+.field textarea{resize:vertical;min-height:56px;line-height:1.5;}
+.field input[type=number]{-moz-appearance:textfield;}
+.field input[type=number]::-webkit-inner-spin-button{display:none;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-submit{width:100%;margin-top:4px;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.05em;}
+.btn-submit:active{opacity:.8;}
+.btn-cancel{width:100%;margin-top:8px;padding:10px;background:none;border:1px solid var(--bdr);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;}
+
+/* DONE */
+.csv-row{display:flex;gap:8px;margin-bottom:10px;}
+.btn-csv{flex:1;padding:10px 6px;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;text-align:center;}
+.done-card{background:#141d1a;border:1px solid #1e2f28;border-radius:var(--r);padding:11px 13px;margin-bottom:8px;}
+.dn{font-size:14px;font-weight:700;color:var(--ok);}
+.dp{font-size:11px;color:var(--muted);margin-top:2px;}
+.dm{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.7;}
+.btn-restore{width:100%;margin-top:8px;padding:7px;background:none;border:1px solid var(--bdr);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg.on{display:flex;}
+.modal{background:var(--surf);border-top:2px solid var(--accent);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:16px 14px 32px;max-height:90vh;overflow-y:auto;}
+.modal h2{font-size:14px;font-weight:800;margin-bottom:14px;color:var(--accent);}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surf2);border:1px solid var(--bdr);color:var(--text);font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:999;white-space:nowrap;}
+#toast.show{opacity:1;}
+
+/* EMPTY */
+.empty{text-align:center;color:var(--muted);padding:44px 20px;font-size:13px;line-height:1.8;}
+.empty-icon{font-size:36px;display:block;margin-bottom:8px;}
+
+/* ALERT BANNER */
+.alert-banner{background:rgba(232,68,58,.12);border:1px solid rgba(232,68,58,.3);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:12px;line-height:1.7;color:var(--danger);}
+.alert-banner strong{font-size:13px;display:block;margin-bottom:4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">現場負荷管理</div>
+  <div class="hdate" id="hdate"></div>
+</header>
+<div class="strip" id="strip"></div>
+<div class="tabs">
+  <button class="tab on"  onclick="go('list')">📋 案件</button>
+  <button class="tab"     onclick="go('gauge')">📅 スケジュール</button>
+  <button class="tab"     onclick="go('add')">＋ 登録</button>
+  <button class="tab"     onclick="go('done')">✅ 完了</button>
+</div>
+
+<div class="content">
+
+  <!-- 案件一覧 -->
+  <div class="pane on" id="pane-list">
+    <div id="alert-area"></div>
+    <div id="order-list"></div>
+  </div>
+
+  <!-- スケジュール -->
+  <div class="pane" id="pane-gauge">
+    <div id="gauge-chart"></div>
+  </div>
+
+  <!-- 登録 -->
+  <div class="pane" id="pane-add">
+    <div class="form-card">
+      <h2>新規案件を登録</h2>
+      <div class="field"><label>会社名 *</label><input type="text" id="f-company" placeholder="例：山田製作所"></div>
+      <div class="field"><label>製品名 *</label><input type="text" id="f-product" placeholder="例：ブラケット A-001"></div>
+      <div class="field"><label>担当者</label><input type="text" id="f-assign" placeholder="例：鈴木"></div>
+      <div class="row2">
+        <div class="field"><label>発送日 *</label><input type="date" id="f-date"></div>
+        <div class="field"><label>必要時間（h）*</label><input type="number" id="f-hours" placeholder="例：8" min="1"></div>
+      </div>
+      <div class="field"><label>メモ</label><textarea id="f-memo" placeholder="工程の注意点など…"></textarea></div>
+      <button class="btn-submit" onclick="addOrder()">登録する</button>
+    </div>
+  </div>
+
+  <!-- 完了済み -->
+  <div class="pane" id="pane-done">
+    <div class="csv-row">
+      <button class="btn-csv" onclick="exportCSV('active')">📥 案件CSV</button>
+      <button class="btn-csv" onclick="exportCSV('done')">📥 完了CSV</button>
+    </div>
+    <div id="done-list"></div>
+  </div>
+
+</div>
+
+<!-- 編集モーダル -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal">
+    <h2>案件を編集</h2>
+    <input type="hidden" id="e-id">
+    <div class="field"><label>会社名 *</label><input type="text" id="e-company"></div>
+    <div class="field"><label>製品名 *</label><input type="text" id="e-product"></div>
+    <div class="field"><label>担当者</label><input type="text" id="e-assign"></div>
+    <div class="row2">
+      <div class="field"><label>発送日 *</label><input type="date" id="e-date"></div>
+      <div class="field"><label>必要時間（h）*</label><input type="number" id="e-hours" min="1"></div>
+    </div>
+    <div class="field"><label>メモ</label><textarea id="e-memo"></textarea></div>
+    <button class="btn-submit" onclick="saveEdit()">保存する</button>
+    <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ===== CONSTANTS ===== */
+const KEY_A = 'fm_orders_v4';
+const KEY_D = 'fm_done_v4';
+const HPD   = 8;
+
+/* ===== STORAGE ===== */
+function load(k){try{return JSON.parse(localStorage.getItem(k)||'[]');}catch{return[];}}
+function save(k,d){localStorage.setItem(k,JSON.stringify(d));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ===== DATE UTILS ===== */
+function today(){const d=new Date();d.setHours(0,0,0,0);return d;}
+function toStr(d){return d.toISOString().slice(0,10);}
+const WD=['日','月','火','水','木','金','土'];
+
+function isWorkday(d){const w=d.getDay();return w!==0&&w!==6;}
+
+// 今日（またはd）から num 稼働日後の日付
+function addWorkdays(base, num){
+  const d=new Date(base);
+  let n=num;
+  while(n>0){d.setDate(d.getDate()+1);if(isWorkday(d))n--;}
+  return d;
+}
+
+// 2日付間の稼働日数（start含む、end含む）
+function workdaysBetween(start, end){
+  const s=new Date(start);s.setHours(0,0,0,0);
+  const e=new Date(end);  e.setHours(0,0,0,0);
+  let n=0,c=new Date(s);
+  while(c<=e){if(isWorkday(c))n++;c.setDate(c.getDate()+1);}
+  return n;
+}
+
+/* ===== SCHEDULING ENGINE =====
+  優先順位順に案件を並べ、1日8hに詰める。
+  8h超えたら翌稼働日へ。
+  各案件の「開始日」「終了日」「超過フラグ」を計算して返す。
+*/
+function schedule(orders){
+  const td = today();
+  // 今日から使える時間を管理（日付文字列→残時間）
+  const dayRemain = {}; // date-str → remaining hours
+
+  function getRemain(ds){
+    if(dayRemain[ds]===undefined) dayRemain[ds]=HPD;
+    return dayRemain[ds];
+  }
+  function consume(ds, h){
+    if(dayRemain[ds]===undefined) dayRemain[ds]=HPD;
+    dayRemain[ds]-=h;
+  }
+
+  // 次の稼働日（今日以降）
+  function nextWorkday(from){
+    const d=new Date(from);
+    d.setDate(d.getDate()+1);
+    while(!isWorkday(d)) d.setDate(d.getDate()+1);
+    return d;
+  }
+  function firstWorkdayFrom(from){
+    const d=new Date(from);d.setHours(0,0,0,0);
+    if(isWorkday(d)) return d;
+    return nextWorkday(d);
+  }
+
+  const result=[];
+  for(const o of orders){
+    const remain = o.hours - (o.done||0);
+    if(remain<=0){
+      result.push({...o, startDate:toStr(td), endDate:toStr(td), alert:false, scheduledDays:[]});
+      continue;
+    }
+    // 今日から詰めていく
+    let cur = firstWorkdayFrom(td);
+    let left = remain;
+    const startDate = toStr(cur);
+    const days=[];
+
+    while(left>0){
+      const ds=toStr(cur);
+      const r=getRemain(ds);
+      if(r>0){
+        const take=Math.min(left,r);
+        consume(ds,take);
+        days.push({date:ds,hours:take});
+        left-=take;
+      }
+      if(left>0){
+        cur=nextWorkday(cur);
+      }
+    }
+    const endDate = days.length ? days[days.length-1].date : startDate;
+    const shipDate = o.shipDate;
+    const alert = endDate > shipDate;
+    result.push({...o, startDate, endDate, alert, scheduledDays:days});
+  }
+  return result;
+}
+
+/* ===== RENDER ALL ===== */
+function renderAll(){
+  const td=today();
+  document.getElementById('hdate').textContent=
+    `${td.getFullYear()}/${td.getMonth()+1}/${td.getDate()}（${WD[td.getDay()]}）`;
+
+  const raw = load(KEY_A); // already sorted by priority (array order)
+  const schd = schedule(raw);
+  renderStrip(schd);
+  renderList(schd);
+  renderGauge(schd);
+  renderDone();
+}
+
+/* --- Strip --- */
+function renderStrip(schd){
+  const alerts=schd.filter(o=>o.alert).length;
+  const totalH=schd.reduce((s,o)=>s+o.hours,0);
+  const doneH =schd.reduce((s,o)=>s+(o.done||0),0);
+  document.getElementById('strip').innerHTML=`
+    <div class="kpi c-acc"><div class="kv">${schd.length}</div><div class="kl">案件数</div></div>
+    <div class="kpi${alerts?' c-dng':''}"><div class="kv">${alerts}</div><div class="kl">⚠ 超過リスク</div></div>
+    <div class="kpi"><div class="kv">${totalH}</div><div class="kl">総工数h</div></div>
+    <div class="kpi c-ok"><div class="kv">${doneH}</div><div class="kl">完了済h</div></div>
+  `;
+}
+
+/* --- Order List (priority-ordered, draggable) --- */
+function renderList(schd){
+  // alert banner
+  const alerts = schd.filter(o=>o.alert);
+  const ab = document.getElementById('alert-area');
+  if(alerts.length){
+    ab.innerHTML=`<div class="alert-banner">
+      <strong>⚠ 発送日に間に合わない可能性がある案件が ${alerts.length} 件あります</strong>
+      ${alerts.map(o=>`・${esc(o.company)}／${esc(o.product)}　発送日:${o.shipDate.slice(5).replace('-','/')}　作業完了予定:${o.endDate.slice(5).replace('-','/')}`).join('<br>')}
+    </div>`;
+  } else {
+    ab.innerHTML='';
+  }
+
+  const el=document.getElementById('order-list');
+  if(!schd.length){
+    el.innerHTML=`<div class="empty"><span class="empty-icon">📦</span>案件がありません<br>「＋ 登録」から追加してください</div>`;
+    return;
+  }
+
+  el.innerHTML=schd.map((o,idx)=>{
+    const remain=o.hours-(o.done||0);
+    const pct=o.hours>0?Math.min(100,Math.round((o.done||0)/o.hours*100)):100;
+    const color=o.alert?'var(--danger)':'var(--ok)';
+    const sfmt=o.shipDate.slice(5).replace('-','/');
+    const efmt=o.endDate.slice(5).replace('-','/');
+    const today0=toStr(today());
+    const daysLeft=workdaysBetween(today0,o.shipDate);
+
+    const assignHtml=o.assign?`<div class="cassign">担当：${esc(o.assign)}</div>`:'';
+    const memoHtml=o.memo?`<div class="memo-box">${esc(o.memo)}</div>`:'';
+
+    // scheduled days summary（今日の作業 + 合計）
+    const todaySched=o.scheduledDays?.find(d=>d.date===today0);
+    const todayH=todaySched?todaySched.hours:0;
+
+    let schedHtml='';
+    if(remain>0){
+      const endColor=o.alert?'danger':daysLeft<=2?'warn':'ok';
+      schedHtml=`<div class="sched-box">
+        <div class="sched-row"><span class="sl">本日作業予定</span><span class="sv">${todayH.toFixed(1)} h</span></div>
+        <div class="sched-row"><span class="sl">作業完了予定</span><span class="sv ${endColor}">${efmt}（${WD[new Date(o.endDate+'T00:00:00').getDay()]}）${o.alert?'　⚠ 発送日超過':''}</span></div>
+        <div class="sched-row"><span class="sl">発送日</span><span class="sv">${sfmt}　残${daysLeft}稼働日</span></div>
+        <div class="sched-row"><span class="sl">残工数</span><span class="sv">${remain} h</span></div>
+      </div>`;
+    } else {
+      schedHtml=`<div class="sched-box"><div class="sched-row"><span class="sl">状態</span><span class="sv ok">作業完了済み　発送日：${sfmt}</span></div></div>`;
+    }
+
+    return `<div class="ocard s-${o.alert?'alert':'ok'}"
+      draggable="true"
+      data-id="${o.id}"
+      data-idx="${idx}"
+      ondragstart="dragStart(event)"
+      ondragover="dragOver(event)"
+      ondragleave="dragLeave(event)"
+      ondrop="dragDrop(event)"
+      ondragend="dragEnd(event)">
+      <div class="ctop">
+        <div class="drag-handle" title="ドラッグで並び替え">⠿</div>
+        <div class="cinfo">
+          <div class="crow1">
+            <div>
+              <div class="cname">${esc(o.company)}</div>
+              <div class="cprod">${esc(o.product)}</div>
+              ${assignHtml}
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              <div class="pnum${idx===0?' p1':''}">${idx+1}</div>
+              <span class="abadge ${o.alert?'ab-alert':'ab-ok'}">${o.alert?'⚠ 超過リスク':'間に合う'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${schedHtml}
+      <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div style="text-align:right;font-size:9px;color:var(--muted);margin-top:2px">進捗 ${pct}%（${o.done||0}h / ${o.hours}h）</div>
+
+      <div class="prog-row">
+        <label>完了報告</label>
+        <input class="pi" type="number" id="pi-${o.id}" placeholder="0" min="0">
+        <span class="pu">h</span>
+        <button class="btn-s be" style="flex:0 0 auto;padding:7px 11px" onclick="addProgress('${o.id}')">更新</button>
+      </div>
+      ${memoHtml}
+      <div class="actions">
+        <button class="btn-s bd" onclick="completeOrder('${o.id}')">✅ 完了</button>
+        <button class="btn-s be" onclick="openEdit('${o.id}')">✏ 編集</button>
+        <button class="btn-s bx" onclick="deleteOrder('${o.id}')">🗑 削除</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  initDragTouch();
+}
+
+/* --- Gauge / Schedule view --- */
+function renderGauge(schd){
+  const el=document.getElementById('gauge-chart');
+  if(!schd.length){
+    el.innerHTML=`<div class="empty"><span class="empty-icon">📅</span>案件を登録するとスケジュールが表示されます</div>`;
+    return;
+  }
+
+  // 日別に案件を集計
+  const dayMap={}; // date-str → [{name, product, hours}]
+  for(const o of schd){
+    for(const d of (o.scheduledDays||[])){
+      if(!dayMap[d.date]) dayMap[d.date]=[];
+      dayMap[d.date].push({name:o.company, product:o.product, hours:d.hours, alert:o.alert});
+    }
+  }
+
+  const td=today();
+  const dates=Object.keys(dayMap).sort();
+  if(!dates.length){el.innerHTML=`<div class="empty"><span class="empty-icon">✅</span>すべての作業が完了しています</div>`;return;}
+
+  // 今日〜最終日まで稼働日をリスト
+  const end=new Date(dates[dates.length-1]+'T00:00:00');
+  const rows=[];
+  const cur=new Date(td);
+  while(cur<=end && rows.length<30){
+    if(isWorkday(cur)){
+      const ds=toStr(cur);
+      const items=dayMap[ds]||[];
+      const total=items.reduce((s,i)=>s+i.hours,0);
+      rows.push({ds,items,total,wd:cur.getDay()});
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+
+  const tdStr=toStr(td);
+  el.innerHTML=rows.map(r=>{
+    const pct=Math.min(100,Math.round(r.total/HPD*100));
+    const over=r.total>HPD;
+    const color=over?'var(--danger)':r.total>HPD*0.85?'var(--warn)':'var(--ok)';
+    const mm=r.ds.slice(5,7), dd=r.ds.slice(8,10);
+    const isToday=r.ds===tdStr;
+    const itemsHtml=r.items.map(i=>`
+      <div class="g-item">
+        <span class="g-ih">${i.hours.toFixed(1)}h</span>
+        <span class="g-in" style="${i.alert?'color:var(--danger)':''}">${esc(i.name)} / ${esc(i.product)}</span>
+      </div>`).join('');
+    return `<div class="g-card">
+      <div class="g-row">
+        <div class="g-lbl">${mm}/${dd}（${WD[r.wd]}）${isToday?' 🔵':''}</div>
+        <div class="g-val">${r.total.toFixed(1)}h / ${HPD}h</div>
+      </div>
+      <div class="g-track"><div class="g-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="g-sub">${pct}%${over?`　⚠ +${(r.total-HPD).toFixed(1)}h オーバー`:''}</div>
+      <div class="g-items">${itemsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+/* --- Done --- */
+function renderDone(){
+  const done=load(KEY_D).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
+  const el=document.getElementById('done-list');
+  if(!done.length){el.innerHTML=`<div class="empty"><span class="empty-icon">✅</span>完了済みの案件はありません</div>`;return;}
+  el.innerHTML=done.map(o=>{
+    const d=new Date(o.completedAt);
+    const cd=`${d.getMonth()+1}/${d.getDate()} 完了`;
+    return `<div class="done-card">
+      <div class="dn">${esc(o.company)}</div>
+      <div class="dp">${esc(o.product)}</div>
+      <div class="dm">発送日: ${o.shipDate.slice(5).replace('-','/')}　工数: ${o.hours}h　${cd}${o.assign?`　担当：${esc(o.assign)}`:''}${o.memo?`<br>${esc(o.memo)}`:''}</div>
+      <button class="btn-restore" onclick="restoreOrder('${o.id}')">← 一覧に戻す</button>
+    </div>`;
+  }).join('');
+}
+
+/* ===== ACTIONS ===== */
+function addOrder(){
+  const company =document.getElementById('f-company').value.trim();
+  const product =document.getElementById('f-product').value.trim();
+  const assign  =document.getElementById('f-assign').value.trim();
+  const shipDate=document.getElementById('f-date').value;
+  const hours   =parseInt(document.getElementById('f-hours').value)||0;
+  const memo    =document.getElementById('f-memo').value.trim();
+  if(!company||!product||!shipDate||hours<1){toast('⚠ 必須項目を入力してください');return;}
+  const orders=load(KEY_A);
+  orders.push({id:uid(),company,product,assign,shipDate,hours,done:0,memo,createdAt:new Date().toISOString()});
+  save(KEY_A,orders);
+  ['f-company','f-product','f-assign','f-hours','f-memo'].forEach(id=>document.getElementById(id).value='');
+  go('list');renderAll();toast('✅ 登録しました');
+}
+
+function addProgress(id){
+  const inp=document.getElementById(`pi-${id}`);
+  const add=parseFloat(inp.value)||0;
+  if(add<=0){toast('完了時間を入力してください');return;}
+  const orders=load(KEY_A);
+  const o=orders.find(x=>x.id===id);
+  if(!o)return;
+  o.done=Math.min(o.hours,(o.done||0)+add);
+  save(KEY_A,orders);inp.value='';
+  renderAll();toast(`＋${add}h 進捗を更新`);
+}
+
+function completeOrder(id){
+  const orders=load(KEY_A);
+  const idx=orders.findIndex(o=>o.id===id);
+  if(idx<0)return;
+  const[o]=orders.splice(idx,1);
+  o.completedAt=new Date().toISOString();
+  const done=load(KEY_D);done.push(o);
+  save(KEY_A,orders);save(KEY_D,done);
+  renderAll();toast('✅ 完了済みに移動しました');
+}
+
+function deleteOrder(id){
+  if(!confirm('この案件を削除しますか？'))return;
+  save(KEY_A,load(KEY_A).filter(o=>o.id!==id));
+  renderAll();toast('🗑 削除しました');
+}
+
+function restoreOrder(id){
+  const done=load(KEY_D);
+  const idx=done.findIndex(o=>o.id===id);
+  if(idx<0)return;
+  const[o]=done.splice(idx,1);
+  delete o.completedAt;
+  const orders=load(KEY_A);orders.push(o);
+  save(KEY_A,orders);save(KEY_D,done);
+  renderAll();toast('↩ 一覧に戻しました');
+}
+
+/* ===== EDIT MODAL ===== */
+function openEdit(id){
+  const o=load(KEY_A).find(x=>x.id===id);
+  if(!o)return;
+  document.getElementById('e-id').value=o.id;
+  document.getElementById('e-company').value=o.company;
+  document.getElementById('e-product').value=o.product;
+  document.getElementById('e-assign').value=o.assign||'';
+  document.getElementById('e-date').value=o.shipDate;
+  document.getElementById('e-hours').value=o.hours;
+  document.getElementById('e-memo').value=o.memo||'';
+  document.getElementById('modal-bg').classList.add('on');
+}
+function closeModal(e){
+  if(!e||e.target===document.getElementById('modal-bg'))
+    document.getElementById('modal-bg').classList.remove('on');
+}
+function saveEdit(){
+  const id=document.getElementById('e-id').value;
+  const company=document.getElementById('e-company').value.trim();
+  const product=document.getElementById('e-product').value.trim();
+  const assign=document.getElementById('e-assign').value.trim();
+  const shipDate=document.getElementById('e-date').value;
+  const hours=parseInt(document.getElementById('e-hours').value)||0;
+  const memo=document.getElementById('e-memo').value.trim();
+  if(!company||!product||!shipDate||hours<1){toast('⚠ 必須項目を入力してください');return;}
+  const orders=load(KEY_A);
+  const o=orders.find(x=>x.id===id);
+  if(!o)return;
+  Object.assign(o,{company,product,assign,shipDate,hours,memo});
+  save(KEY_A,orders);closeModal();renderAll();toast('💾 保存しました');
+}
+
+/* ===== DRAG & DROP (mouse + touch) ===== */
+let dragSrcIdx = null;
+let touchDragEl = null;
+let touchGhost  = null;
+
+function dragStart(e){
+  dragSrcIdx = parseInt(e.currentTarget.dataset.idx);
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>e.currentTarget.classList.add('dragging'),0);
+}
+function dragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.ocard').forEach(c=>c.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function dragDrop(e){
+  e.preventDefault();
+  const toIdx=parseInt(e.currentTarget.dataset.idx);
+  if(dragSrcIdx===null||dragSrcIdx===toIdx)return;
+  moveOrder(dragSrcIdx,toIdx);
+}
+function dragEnd(e){
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.ocard').forEach(c=>c.classList.remove('drag-over','dragging'));
+  dragSrcIdx=null;
+}
+
+function moveOrder(from,to){
+  const orders=load(KEY_A);
+  const [item]=orders.splice(from,1);
+  orders.splice(to,0,item);
+  save(KEY_A,orders);
+  renderAll();toast('🔀 順序を変更しました');
+}
+
+/* Touch drag for mobile */
+function initDragTouch(){
+  document.querySelectorAll('.drag-handle').forEach(handle=>{
+    handle.addEventListener('touchstart',touchStart,{passive:false});
+  });
+}
+
+let touchSrcIdx=null, touchOverIdx=null;
+
+function touchStart(e){
+  e.preventDefault();
+  const card=e.currentTarget.closest('.ocard');
+  touchSrcIdx=parseInt(card.dataset.idx);
+
+  // ghost
+  touchGhost=card.cloneNode(true);
+  const r=card.getBoundingClientRect();
+  touchGhost.style.cssText=`
+    position:fixed;top:${r.top}px;left:${r.left}px;width:${r.width}px;
+    opacity:.85;pointer-events:none;z-index:500;border:2px solid var(--accent);
+    border-radius:var(--r);transform:scale(1.02);transition:top .05s;
+  `;
+  document.body.appendChild(touchGhost);
+  card.classList.add('dragging');
+
+  document.addEventListener('touchmove',touchMove,{passive:false});
+  document.addEventListener('touchend',touchEnd);
+}
+
+function touchMove(e){
+  e.preventDefault();
+  const t=e.touches[0];
+  if(touchGhost) touchGhost.style.top=(t.clientY-40)+'px';
+
+  // find card under touch
+  touchGhost.style.display='none';
+  const under=document.elementFromPoint(t.clientX,t.clientY);
+  touchGhost.style.display='';
+  const overCard=under?.closest('.ocard');
+  document.querySelectorAll('.ocard').forEach(c=>c.classList.remove('drag-over'));
+  if(overCard&&overCard.dataset.idx!==undefined){
+    touchOverIdx=parseInt(overCard.dataset.idx);
+    if(touchOverIdx!==touchSrcIdx) overCard.classList.add('drag-over');
+  }
+}
+
+function touchEnd(){
+  if(touchGhost){touchGhost.remove();touchGhost=null;}
+  document.querySelectorAll('.ocard').forEach(c=>c.classList.remove('dragging','drag-over'));
+  document.removeEventListener('touchmove',touchMove);
+  document.removeEventListener('touchend',touchEnd);
+  if(touchSrcIdx!==null&&touchOverIdx!==null&&touchSrcIdx!==touchOverIdx){
+    moveOrder(touchSrcIdx,touchOverIdx);
+  }
+  touchSrcIdx=null;touchOverIdx=null;
+}
+
+/* ===== CSV ===== */
+function exportCSV(type){
+  const data=type==='done'?load(KEY_D):load(KEY_A);
+  if(!data.length){toast('データがありません');return;}
+  const rows=[['優先順位','会社名','製品名','担当者','発送日','必要時間(h)','完了済(h)','メモ','登録日','完了日']];
+  data.forEach((o,i)=>rows.push([
+    i+1,o.company,o.product,o.assign||'',o.shipDate,
+    o.hours,o.done||0,(o.memo||'').replace(/\n/g,' '),
+    (o.createdAt||'').slice(0,10),(o.completedAt||'').slice(0,10)
+  ]));
+  const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`schedule-${type}-${toStr(new Date())}.csv`;
+  a.click();toast('📥 CSVをダウンロード');
+}
+
+/* ===== TAB ===== */
+const TABS=['list','gauge','add','done'];
+function go(name){
+  TABS.forEach((t,i)=>{
+    document.getElementById(`pane-${t}`).classList.toggle('on',t===name);
+    document.querySelectorAll('.tab')[i].classList.toggle('on',t===name);
+  });
+}
+
+/* ===== TOAST ===== */
+let toastTimer;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+/* ===== INIT ===== */
+(function(){
+  const d=new Date();d.setDate(d.getDate()+1);
+  document.getElementById('f-date').value=d.toISOString().slice(0,10);
+  renderAll();
+})();
+</script>
+</body>
+</html>
