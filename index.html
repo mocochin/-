@@ -24,25 +24,22 @@ html,body{height:100%;overflow:hidden;}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;display:flex;flex-direction:column;}
 
 /* HEADER */
-header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14px 8px;flex-shrink:0;display:flex;align-items:center;gap:8px;}
-.logo{font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--accent);white-space:nowrap;}
-.hdate{font-size:11px;color:var(--muted);flex:1;text-align:right;}
+header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14px 8px;flex-shrink:0;display:flex;align-items:center;}
+.logo{font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--accent);white-space:nowrap;flex:1;}
+.hdate{font-size:11px;color:var(--muted);}
 
 /* STRIP */
 .strip{background:var(--surf);border-bottom:2px solid var(--bdr);display:flex;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
 .strip::-webkit-scrollbar{display:none;}
 .kpi{flex:1 0 64px;padding:7px 8px 6px;text-align:center;border-right:1px solid var(--bdr);}
 .kpi:last-child{border-right:none;}
-.kv{font-size:20px;font-weight:800;line-height:1;letter-spacing:-.02em;}
+.kv{font-size:20px;font-weight:800;line-height:1;}
 .kl{font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:.05em;}
-.kpi.c-acc .kv{color:var(--accent);}
-.kpi.c-ok  .kv{color:var(--ok);}
-.kpi.c-wr  .kv{color:var(--warn);}
-.kpi.c-dng .kv{color:var(--danger);}
+.c-acc .kv{color:var(--accent);} .c-ok .kv{color:var(--ok);} .c-dng .kv{color:var(--danger);}
 
 /* TABS */
 .tabs{display:flex;background:var(--surf2);border-bottom:1px solid var(--bdr);flex-shrink:0;}
-.tab{flex:1;padding:9px 4px 8px;border:none;background:none;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.04em;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+.tab{flex:1;padding:9px 2px 8px;border:none;background:none;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
 .tab.on{color:var(--accent);border-bottom-color:var(--accent);}
 
 /* CONTENT */
@@ -50,112 +47,136 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14
 .pane{display:none;padding:10px 12px 20px;}
 .pane.on{display:block;}
 
-/* SECTION LABEL */
-.sec-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:14px 0 6px;padding-left:2px;}
-.sec-label:first-child{margin-top:0;}
-
-/* ---- ORDER CARD ---- */
-.ocard{
-  background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);
-  padding:12px 13px;margin-bottom:8px;position:relative;
-  transition:box-shadow .15s,transform .15s;
+/* ========== CALENDAR TAB ========== */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-nav button{background:var(--surf2);border:1px solid var(--bdr);color:var(--text);border-radius:6px;padding:6px 14px;font-size:14px;cursor:pointer;}
+.cal-month{font-size:15px;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dow{text-align:center;font-size:9px;color:var(--muted);padding:4px 0;font-weight:700;}
+.cal-dow.sun{color:#e87070;} .cal-dow.sat{color:#6090e8;}
+.cal-cell{
+  background:var(--surf);border:1px solid var(--bdr);border-radius:6px;
+  padding:4px 3px;text-align:center;cursor:pointer;min-height:48px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:border-color .15s;
 }
-.ocard.dragging{opacity:.4;}
-.ocard.drag-over{box-shadow:0 0 0 2px var(--accent);transform:scale(1.01);}
-.ocard.s-alert{border-left:3px solid var(--danger);background:rgba(232,68,58,.04);}
+.cal-cell:active{opacity:.7;}
+.cal-cell.today{border-color:var(--accent);}
+.cal-cell.past{opacity:.4;cursor:default;}
+.cal-cell.empty{background:transparent;border-color:transparent;cursor:default;}
+.cal-cell .cdn{font-size:12px;font-weight:600;}
+.cal-cell .cdh{font-size:9px;font-weight:700;border-radius:3px;padding:1px 4px;white-space:nowrap;}
+.cdh.h8 {background:rgba(39,189,114,.15);color:var(--ok);}
+.cdh.h-low{background:rgba(245,166,35,.18);color:var(--warn);}
+.cdh.h0 {background:rgba(232,68,58,.15);color:var(--danger);}
+
+/* cal modal */
+.cal-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center;}
+.cal-modal-bg.on{display:flex;}
+.cal-modal{background:var(--surf);border-top:2px solid var(--accent);border-radius:16px 16px 0 0;width:100%;max-width:400px;padding:20px 16px 36px;}
+.cal-modal h3{font-size:15px;font-weight:800;color:var(--accent);margin-bottom:16px;}
+.cal-modal .cm-date{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.hour-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+.hour-btn{padding:12px 4px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;text-align:center;}
+.hour-btn.sel{background:var(--accent);border-color:var(--accent);color:#fff;}
+.hour-btn.h0{border-color:rgba(232,68,58,.4);color:var(--danger);}
+.hour-btn.h0.sel{background:var(--danger);border-color:var(--danger);color:#fff;}
+.cal-modal .note{font-size:11px;color:var(--muted);margin-bottom:12px;}
+.btn-cm-close{width:100%;padding:12px;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;color:var(--muted);font-size:14px;cursor:pointer;}
+
+/* ========== SCHEDULE TAB ========== */
+.sch-legend{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+.leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);}
+.leg-dot{width:8px;height:8px;border-radius:50%;}
+
+/* priority list */
+.pri-section{margin-bottom:16px;}
+.pri-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.pri-row{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surf);border:1px solid var(--bdr);border-radius:8px;
+  padding:9px 10px;margin-bottom:5px;
+}
+.pri-row.alert{border-left:2px solid var(--danger);}
+.pri-row.ok   {border-left:2px solid var(--ok);}
+.pri-num{width:20px;text-align:center;font-size:11px;font-weight:800;color:var(--muted);flex-shrink:0;}
+.pri-num.p1{color:var(--accent);}
+.pri-info{flex:1;min-width:0;}
+.pri-name{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pri-sub{font-size:10px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pri-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0;white-space:nowrap;}
+.pb-alert{background:rgba(232,68,58,.18);color:var(--danger);}
+.pb-ok   {background:rgba(39,189,114,.14);color:var(--ok);}
+.move-btns{display:flex;flex-direction:column;gap:3px;flex-shrink:0;}
+.mv{width:28px;height:24px;border:1px solid var(--bdr);border-radius:4px;background:var(--surf2);color:var(--text);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.mv:active{background:var(--accent);color:#fff;}
+.mv:disabled{opacity:.25;cursor:default;}
+
+/* day cards (schedule) */
+.day-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;}
+.day-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.day-label{font-size:13px;font-weight:700;flex:1;}
+.day-val{font-size:11px;color:var(--muted);}
+.day-track{background:var(--bg);border-radius:4px;height:8px;overflow:hidden;margin-bottom:4px;}
+.day-fill{height:100%;border-radius:4px;}
+.day-sub{font-size:9px;color:var(--muted);margin-bottom:6px;}
+.day-items{}
+.di{display:flex;gap:6px;font-size:10px;padding:3px 0;border-bottom:1px solid var(--bdr);}
+.di:last-child{border-bottom:none;}
+.di-h{color:var(--muted);white-space:nowrap;flex-shrink:0;width:30px;text-align:right;}
+.di-n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.di-n.alert{color:var(--danger);}
+
+/* ========== ORDER CARDS ========== */
+.ocard{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 13px;margin-bottom:8px;}
+.ocard.s-alert{border-left:3px solid var(--danger);}
 .ocard.s-ok   {border-left:3px solid var(--ok);}
-
-/* card top */
 .ctop{display:flex;align-items:flex-start;gap:8px;}
-.drag-handle{
-  flex-shrink:0;color:var(--muted);font-size:16px;cursor:grab;
-  padding:2px 4px 2px 0;line-height:1;user-select:none;touch-action:none;
-}
-.drag-handle:active{cursor:grabbing;}
 .cinfo{flex:1;min-width:0;}
 .crow1{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
 .cname{font-size:15px;font-weight:700;}
 .cprod{font-size:11px;color:var(--muted);margin-top:2px;}
 .cassign{font-size:11px;color:var(--accent);margin-top:1px;}
-
-/* priority badge */
-.pnum{
-  flex-shrink:0;width:24px;height:24px;border-radius:50%;
-  background:var(--surf2);border:1px solid var(--bdr);
-  font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;
-  color:var(--muted);
-}
+.pnum{width:24px;height:24px;border-radius:50%;background:var(--surf2);border:1px solid var(--bdr);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;}
 .pnum.p1{background:var(--accent);border-color:var(--accent);color:#fff;}
-
-/* alert badge */
-.abadge{
-  flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.07em;
-  padding:3px 8px;border-radius:4px;white-space:nowrap;margin-top:2px;
-}
+.abadge{font-size:9px;font-weight:800;letter-spacing:.07em;padding:3px 8px;border-radius:4px;white-space:nowrap;margin-top:3px;}
 .ab-alert{background:rgba(232,68,58,.18);color:var(--danger);}
 .ab-ok   {background:rgba(39,189,114,.14);color:var(--ok);}
-
-/* schedule info */
-.sched-box{
-  margin-top:10px;padding:8px 10px;
-  background:var(--bg);border-radius:6px;
-  font-size:11px;line-height:1.8;
-}
-.sched-row{display:flex;gap:8px;}
-.sched-row .sl{color:var(--muted);white-space:nowrap;}
-.sched-row .sv{font-weight:600;}
-.sv.danger{color:var(--danger);}
-.sv.ok    {color:var(--ok);}
-.sv.warn  {color:var(--warn);}
-
-/* progress bar */
-.prog-wrap{background:var(--bdr);border-radius:3px;height:4px;overflow:hidden;margin-top:9px;}
+.sched-box{margin-top:10px;padding:8px 10px;background:var(--bg);border-radius:6px;font-size:11px;line-height:1.9;}
+.sr{display:flex;gap:8px;}
+.sl{color:var(--muted);white-space:nowrap;}
+.sv{font-weight:600;}
+.sv.danger{color:var(--danger);} .sv.ok{color:var(--ok);} .sv.warn{color:var(--warn);}
+.prog-wrap{background:var(--bdr);border-radius:3px;height:4px;overflow:hidden;margin-top:8px;}
 .prog-fill{height:100%;border-radius:3px;}
-
-/* progress input */
 .prog-row{display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid var(--bdr);}
 .prog-row label{font-size:10px;color:var(--muted);white-space:nowrap;}
 .pi{flex:1;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;color:var(--text);font-size:14px;padding:5px 8px;outline:none;-moz-appearance:textfield;}
 .pi::-webkit-inner-spin-button{display:none;}
 .pi:focus{border-color:var(--accent);}
-.pu{font-size:11px;color:var(--muted);}
-
-/* memo */
 .memo-box{margin-top:8px;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-all;line-height:1.6;padding:6px 8px;background:var(--bg);border-radius:5px;}
-
-/* actions */
 .actions{display:flex;gap:6px;margin-top:10px;}
-.btn-s{flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.03em;}
-.bd {background:rgba(39,189,114,.14);color:var(--ok);  border:1px solid rgba(39,189,114,.28);}
-.be {background:rgba(91,141,238,.13);color:var(--accent);border:1px solid rgba(91,141,238,.28);}
-.bx {background:rgba(232,68,58,.11); color:var(--danger);border:1px solid rgba(232,68,58,.22);}
+.btn-s{flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;}
+.bd{background:rgba(39,189,114,.14);color:var(--ok);border:1px solid rgba(39,189,114,.28);}
+.be{background:rgba(91,141,238,.13);color:var(--accent);border:1px solid rgba(91,141,238,.28);}
+.bx{background:rgba(232,68,58,.11);color:var(--danger);border:1px solid rgba(232,68,58,.22);}
 
-/* GAUGE */
-.g-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:11px 13px;margin-bottom:8px;}
-.g-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
-.g-lbl{font-size:13px;font-weight:600;flex:1;}
-.g-val{font-size:11px;color:var(--muted);white-space:nowrap;}
-.g-track{background:var(--bg);border-radius:4px;height:9px;overflow:hidden;}
-.g-fill{height:100%;border-radius:4px;}
-.g-sub{font-size:9px;color:var(--muted);margin-top:3px;}
-.g-items{margin-top:5px;}
-.g-item{font-size:10px;padding:2px 0;border-bottom:1px solid var(--bdr);display:flex;gap:6px;}
-.g-item:last-child{border-bottom:none;}
-.g-ih{color:var(--muted);white-space:nowrap;flex-shrink:0;}
-.g-in{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ALERT BANNER */
+.alert-banner{background:rgba(232,68,58,.1);border:1px solid rgba(232,68,58,.3);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:11px;line-height:1.8;color:var(--danger);}
+.alert-banner strong{font-size:13px;display:block;margin-bottom:4px;}
 
 /* FORM */
 .form-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:14px;}
 .form-card h2{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;}
 .field{margin-bottom:10px;}
-.field label{display:block;font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.04em;}
+.field label{display:block;font-size:10px;color:var(--muted);margin-bottom:4px;}
 .field input,.field textarea{width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;color:var(--text);font-size:14px;padding:9px 11px;outline:none;font-family:var(--font);transition:border-color .15s;}
 .field input:focus,.field textarea:focus{border-color:var(--accent);}
 .field textarea{resize:vertical;min-height:56px;line-height:1.5;}
 .field input[type=number]{-moz-appearance:textfield;}
 .field input[type=number]::-webkit-inner-spin-button{display:none;}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.btn-submit{width:100%;margin-top:4px;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.05em;}
+.btn-submit{width:100%;margin-top:4px;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:800;cursor:pointer;}
 .btn-submit:active{opacity:.8;}
 .btn-cancel{width:100%;margin-top:8px;padding:10px;background:none;border:1px solid var(--bdr);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;}
 
@@ -168,8 +189,8 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14
 .dm{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.7;}
 .btn-restore{width:100%;margin-top:8px;padding:7px;background:none;border:1px solid var(--bdr);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;}
 
-/* MODAL */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center;}
+/* EDIT MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:flex-end;justify-content:center;}
 .modal-bg.on{display:flex;}
 .modal{background:var(--surf);border-top:2px solid var(--accent);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:16px 14px 32px;max-height:90vh;overflow-y:auto;}
 .modal h2{font-size:14px;font-weight:800;margin-bottom:14px;color:var(--accent);}
@@ -178,13 +199,8 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surf2);border:1px solid var(--bdr);color:var(--text);font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:999;white-space:nowrap;}
 #toast.show{opacity:1;}
 
-/* EMPTY */
 .empty{text-align:center;color:var(--muted);padding:44px 20px;font-size:13px;line-height:1.8;}
 .empty-icon{font-size:36px;display:block;margin-bottom:8px;}
-
-/* ALERT BANNER */
-.alert-banner{background:rgba(232,68,58,.12);border:1px solid rgba(232,68,58,.3);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:12px;line-height:1.7;color:var(--danger);}
-.alert-banner strong{font-size:13px;display:block;margin-bottom:4px;}
 </style>
 </head>
 <body>
@@ -196,7 +212,8 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14
 <div class="strip" id="strip"></div>
 <div class="tabs">
   <button class="tab on"  onclick="go('list')">📋 案件</button>
-  <button class="tab"     onclick="go('gauge')">📅 スケジュール</button>
+  <button class="tab"     onclick="go('sched')">📅 予定</button>
+  <button class="tab"     onclick="go('cal')">🗓 稼働設定</button>
   <button class="tab"     onclick="go('add')">＋ 登録</button>
   <button class="tab"     onclick="go('done')">✅ 完了</button>
 </div>
@@ -209,9 +226,30 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14
     <div id="order-list"></div>
   </div>
 
-  <!-- スケジュール -->
-  <div class="pane" id="pane-gauge">
-    <div id="gauge-chart"></div>
+  <!-- スケジュール＋優先順位 -->
+  <div class="pane" id="pane-sched">
+    <div class="pri-section">
+      <div class="pri-title">優先順位（↑↓で入れ替え）</div>
+      <div id="pri-list"></div>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">日別スケジュール</div>
+    <div id="day-list"></div>
+  </div>
+
+  <!-- 稼働設定カレンダー -->
+  <div class="pane" id="pane-cal">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">日付をタップして稼働時間を設定します。<br>デフォルト：平日8h・土曜0h・日曜0h</div>
+    <div class="cal-nav">
+      <button onclick="calPrev()">‹</button>
+      <div class="cal-month" id="cal-month"></div>
+      <button onclick="calNext()">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+      <div class="leg"><div class="leg-dot" style="background:var(--ok)"></div>通常稼働（8h）</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--warn)"></div>短縮稼働</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--danger)"></div>休み（0h）</div>
+    </div>
   </div>
 
   <!-- 登録 -->
@@ -241,8 +279,19 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14
 
 </div>
 
+<!-- 稼働時間設定モーダル -->
+<div class="cal-modal-bg" id="cal-modal-bg">
+  <div class="cal-modal">
+    <h3>稼働時間を設定</h3>
+    <div class="cm-date" id="cm-date"></div>
+    <div class="hour-btns" id="hour-btns"></div>
+    <div class="note">※ デフォルトに戻す場合は「既定」を選択</div>
+    <button class="btn-cm-close" onclick="closeCalModal()">閉じる</button>
+  </div>
+</div>
+
 <!-- 編集モーダル -->
-<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+<div class="modal-bg" id="modal-bg" onclick="closeEditModal(event)">
   <div class="modal">
     <h2>案件を編集</h2>
     <input type="hidden" id="e-id">
@@ -255,110 +304,130 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14
     </div>
     <div class="field"><label>メモ</label><textarea id="e-memo"></textarea></div>
     <button class="btn-submit" onclick="saveEdit()">保存する</button>
-    <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+    <button class="btn-cancel" onclick="closeEditModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- 削除確認モーダル -->
+<div class="cal-modal-bg" id="del-modal-bg">
+  <div class="cal-modal">
+    <h3 style="color:var(--danger)">🗑 案件を削除</h3>
+    <div class="cm-date" id="del-modal-msg" style="margin-bottom:20px;line-height:1.7;"></div>
+    <button class="btn-submit" style="background:var(--danger);margin-bottom:10px;" onclick="confirmDelete()">削除する</button>
+    <button class="btn-cm-close" onclick="closeDelModal()">キャンセル</button>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-/* ===== CONSTANTS ===== */
-const KEY_A = 'fm_orders_v4';
-const KEY_D = 'fm_done_v4';
-const HPD   = 8;
+/* ===== KEYS ===== */
+const KEY_A   = 'fm_orders_v5';
+const KEY_D   = 'fm_done_v5';
+const KEY_CAL = 'fm_cal_v5';   // { "2025-07-15": 5, "2025-07-20": 0, ... } null=既定
 
 /* ===== STORAGE ===== */
-function load(k){try{return JSON.parse(localStorage.getItem(k)||'[]');}catch{return[];}}
+function load(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
+function loadArr(k){try{return JSON.parse(localStorage.getItem(k)||'[]');}catch{return[];}}
 function save(k,d){localStorage.setItem(k,JSON.stringify(d));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ===== CAPACITY ===== */
+// calMap: { "YYYY-MM-DD": hours }  — only overrides stored
+function getCalMap(){return load(KEY_CAL)||{};}
+function setCalDay(ds,h){
+  const m=getCalMap();
+  if(h===null) delete m[ds]; else m[ds]=h;
+  save(KEY_CAL,m);
+}
+
+// 既定稼働時間（カレンダー上書きなし）
+function defaultCap(dateObj){
+  const w=dateObj.getDay();
+  return (w===0||w===6)?0:8;
+}
+// 実際の稼働時間（カレンダー上書きあり）
+function capOf(ds){
+  const m=getCalMap();
+  if(m[ds]!==undefined) return m[ds];
+  const d=new Date(ds+'T00:00:00');
+  return defaultCap(d);
+}
 
 /* ===== DATE UTILS ===== */
 function today(){const d=new Date();d.setHours(0,0,0,0);return d;}
 function toStr(d){return d.toISOString().slice(0,10);}
 const WD=['日','月','火','水','木','金','土'];
 
-function isWorkday(d){const w=d.getDay();return w!==0&&w!==6;}
-
-// 今日（またはd）から num 稼働日後の日付
-function addWorkdays(base, num){
-  const d=new Date(base);
-  let n=num;
-  while(n>0){d.setDate(d.getDate()+1);if(isWorkday(d))n--;}
-  return d;
+function nextWorkingDay(fromDate){
+  // 翌日以降でcap>0の最初の日
+  const d=new Date(fromDate);
+  d.setDate(d.getDate()+1);
+  for(let i=0;i<365;i++){
+    if(capOf(toStr(d))>0) return new Date(d);
+    d.setDate(d.getDate()+1);
+  }
+  return new Date(fromDate); // fallback
 }
 
-// 2日付間の稼働日数（start含む、end含む）
-function workdaysBetween(start, end){
-  const s=new Date(start);s.setHours(0,0,0,0);
-  const e=new Date(end);  e.setHours(0,0,0,0);
-  let n=0,c=new Date(s);
-  while(c<=e){if(isWorkday(c))n++;c.setDate(c.getDate()+1);}
+function workdaysBetween(ds1,ds2){
+  const a=new Date(ds1+'T00:00:00'), b=new Date(ds2+'T00:00:00');
+  let n=0,c=new Date(a);
+  while(c<=b){if(capOf(toStr(c))>0)n++;c.setDate(c.getDate()+1);}
   return n;
 }
 
 /* ===== SCHEDULING ENGINE =====
-  優先順位順に案件を並べ、1日8hに詰める。
-  8h超えたら翌稼働日へ。
-  各案件の「開始日」「終了日」「超過フラグ」を計算して返す。
+  優先順位順（配列順）に案件を詰める。
+  各日のremainCapをカレンダー設定で決める。
 */
 function schedule(orders){
-  const td = today();
-  // 今日から使える時間を管理（日付文字列→残時間）
-  const dayRemain = {}; // date-str → remaining hours
+  const td=today();
+  const dayRemain={};
 
-  function getRemain(ds){
-    if(dayRemain[ds]===undefined) dayRemain[ds]=HPD;
+  function rem(ds){
+    if(dayRemain[ds]===undefined) dayRemain[ds]=capOf(ds);
     return dayRemain[ds];
   }
-  function consume(ds, h){
-    if(dayRemain[ds]===undefined) dayRemain[ds]=HPD;
+  function consume(ds,h){
+    if(dayRemain[ds]===undefined) dayRemain[ds]=capOf(ds);
     dayRemain[ds]-=h;
   }
 
-  // 次の稼働日（今日以降）
-  function nextWorkday(from){
-    const d=new Date(from);
-    d.setDate(d.getDate()+1);
-    while(!isWorkday(d)) d.setDate(d.getDate()+1);
-    return d;
-  }
-  function firstWorkdayFrom(from){
-    const d=new Date(from);d.setHours(0,0,0,0);
-    if(isWorkday(d)) return d;
-    return nextWorkday(d);
+  // 今日以降でcap>0の最初の稼働日
+  function firstFrom(d){
+    const s=new Date(d);s.setHours(0,0,0,0);
+    if(capOf(toStr(s))>0) return s;
+    return nextWorkingDay(s);
   }
 
   const result=[];
   for(const o of orders){
-    const remain = o.hours - (o.done||0);
+    const remain=o.hours-(o.done||0);
     if(remain<=0){
-      result.push({...o, startDate:toStr(td), endDate:toStr(td), alert:false, scheduledDays:[]});
+      result.push({...o,startDate:toStr(td),endDate:toStr(td),alert:false,scheduledDays:[]});
       continue;
     }
-    // 今日から詰めていく
-    let cur = firstWorkdayFrom(td);
-    let left = remain;
-    const startDate = toStr(cur);
+    let cur=firstFrom(td);
+    let left=remain;
     const days=[];
 
     while(left>0){
       const ds=toStr(cur);
-      const r=getRemain(ds);
+      const r=rem(ds);
       if(r>0){
         const take=Math.min(left,r);
         consume(ds,take);
         days.push({date:ds,hours:take});
         left-=take;
       }
-      if(left>0){
-        cur=nextWorkday(cur);
-      }
+      if(left>0) cur=nextWorkingDay(cur);
     }
-    const endDate = days.length ? days[days.length-1].date : startDate;
-    const shipDate = o.shipDate;
-    const alert = endDate > shipDate;
-    result.push({...o, startDate, endDate, alert, scheduledDays:days});
+
+    const endDate=days.length?days[days.length-1].date:toStr(td);
+    const alert=endDate>o.shipDate;
+    result.push({...o,startDate:days[0]?.date||toStr(td),endDate,alert,scheduledDays:days});
   }
   return result;
 }
@@ -367,14 +436,15 @@ function schedule(orders){
 function renderAll(){
   const td=today();
   document.getElementById('hdate').textContent=
-    `${td.getFullYear()}/${td.getMonth()+1}/${td.getDate()}（${WD[td.getDay()]}）`;
+    `${td.getMonth()+1}/${td.getDate()}（${WD[td.getDay()]}）`;
 
-  const raw = load(KEY_A); // already sorted by priority (array order)
-  const schd = schedule(raw);
+  const raw=loadArr(KEY_A);
+  const schd=schedule(raw);
   renderStrip(schd);
   renderList(schd);
-  renderGauge(schd);
+  renderSchedTab(schd,raw);
   renderDone();
+  renderCal();
 }
 
 /* --- Strip --- */
@@ -384,97 +454,66 @@ function renderStrip(schd){
   const doneH =schd.reduce((s,o)=>s+(o.done||0),0);
   document.getElementById('strip').innerHTML=`
     <div class="kpi c-acc"><div class="kv">${schd.length}</div><div class="kl">案件数</div></div>
-    <div class="kpi${alerts?' c-dng':''}"><div class="kv">${alerts}</div><div class="kl">⚠ 超過リスク</div></div>
+    <div class="kpi${alerts?' c-dng':''}"><div class="kv">${alerts}</div><div class="kl">超過リスク</div></div>
     <div class="kpi"><div class="kv">${totalH}</div><div class="kl">総工数h</div></div>
     <div class="kpi c-ok"><div class="kv">${doneH}</div><div class="kl">完了済h</div></div>
   `;
 }
 
-/* --- Order List (priority-ordered, draggable) --- */
+/* --- Order List --- */
 function renderList(schd){
-  // alert banner
-  const alerts = schd.filter(o=>o.alert);
-  const ab = document.getElementById('alert-area');
-  if(alerts.length){
-    ab.innerHTML=`<div class="alert-banner">
-      <strong>⚠ 発送日に間に合わない可能性がある案件が ${alerts.length} 件あります</strong>
-      ${alerts.map(o=>`・${esc(o.company)}／${esc(o.product)}　発送日:${o.shipDate.slice(5).replace('-','/')}　作業完了予定:${o.endDate.slice(5).replace('-','/')}`).join('<br>')}
-    </div>`;
-  } else {
-    ab.innerHTML='';
-  }
+  const alerts=schd.filter(o=>o.alert);
+  const ab=document.getElementById('alert-area');
+  ab.innerHTML=alerts.length?`<div class="alert-banner">
+    <strong>⚠ 発送日に間に合わない可能性：${alerts.length}件</strong>
+    ${alerts.map(o=>`・${esc(o.company)}／${esc(o.product)}　発送日 ${o.shipDate.slice(5).replace('-','/')}　完了予定 ${o.endDate.slice(5).replace('-','/')}`).join('<br>')}
+  </div>`:'';
 
   const el=document.getElementById('order-list');
-  if(!schd.length){
-    el.innerHTML=`<div class="empty"><span class="empty-icon">📦</span>案件がありません<br>「＋ 登録」から追加してください</div>`;
-    return;
-  }
+  if(!schd.length){el.innerHTML=`<div class="empty"><span class="empty-icon">📦</span>案件がありません<br>「＋ 登録」から追加してください</div>`;return;}
 
+  const tdStr=toStr(today());
   el.innerHTML=schd.map((o,idx)=>{
     const remain=o.hours-(o.done||0);
     const pct=o.hours>0?Math.min(100,Math.round((o.done||0)/o.hours*100)):100;
     const color=o.alert?'var(--danger)':'var(--ok)';
     const sfmt=o.shipDate.slice(5).replace('-','/');
     const efmt=o.endDate.slice(5).replace('-','/');
-    const today0=toStr(today());
-    const daysLeft=workdaysBetween(today0,o.shipDate);
+    const wd=workdaysBetween(tdStr,o.shipDate);
+    const todayH=o.scheduledDays?.find(d=>d.date===tdStr)?.hours||0;
+    const endColor=o.alert?'danger':wd<=2?'warn':'ok';
 
-    const assignHtml=o.assign?`<div class="cassign">担当：${esc(o.assign)}</div>`:'';
-    const memoHtml=o.memo?`<div class="memo-box">${esc(o.memo)}</div>`:'';
-
-    // scheduled days summary（今日の作業 + 合計）
-    const todaySched=o.scheduledDays?.find(d=>d.date===today0);
-    const todayH=todaySched?todaySched.hours:0;
-
-    let schedHtml='';
-    if(remain>0){
-      const endColor=o.alert?'danger':daysLeft<=2?'warn':'ok';
-      schedHtml=`<div class="sched-box">
-        <div class="sched-row"><span class="sl">本日作業予定</span><span class="sv">${todayH.toFixed(1)} h</span></div>
-        <div class="sched-row"><span class="sl">作業完了予定</span><span class="sv ${endColor}">${efmt}（${WD[new Date(o.endDate+'T00:00:00').getDay()]}）${o.alert?'　⚠ 発送日超過':''}</span></div>
-        <div class="sched-row"><span class="sl">発送日</span><span class="sv">${sfmt}　残${daysLeft}稼働日</span></div>
-        <div class="sched-row"><span class="sl">残工数</span><span class="sv">${remain} h</span></div>
-      </div>`;
-    } else {
-      schedHtml=`<div class="sched-box"><div class="sched-row"><span class="sl">状態</span><span class="sv ok">作業完了済み　発送日：${sfmt}</span></div></div>`;
-    }
-
-    return `<div class="ocard s-${o.alert?'alert':'ok'}"
-      draggable="true"
-      data-id="${o.id}"
-      data-idx="${idx}"
-      ondragstart="dragStart(event)"
-      ondragover="dragOver(event)"
-      ondragleave="dragLeave(event)"
-      ondrop="dragDrop(event)"
-      ondragend="dragEnd(event)">
+    return `<div class="ocard s-${o.alert?'alert':'ok'}">
       <div class="ctop">
-        <div class="drag-handle" title="ドラッグで並び替え">⠿</div>
         <div class="cinfo">
           <div class="crow1">
             <div>
               <div class="cname">${esc(o.company)}</div>
               <div class="cprod">${esc(o.product)}</div>
-              ${assignHtml}
+              ${o.assign?`<div class="cassign">担当：${esc(o.assign)}</div>`:''}
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
               <div class="pnum${idx===0?' p1':''}">${idx+1}</div>
-              <span class="abadge ${o.alert?'ab-alert':'ab-ok'}">${o.alert?'⚠ 超過リスク':'間に合う'}</span>
+              <span class="abadge ${o.alert?'ab-alert':'ab-ok'}">${o.alert?'⚠ 超過':'間に合う'}</span>
             </div>
           </div>
         </div>
       </div>
-      ${schedHtml}
+      ${remain>0?`<div class="sched-box">
+        <div class="sr"><span class="sl">本日予定</span><span class="sv">${todayH.toFixed(1)} h</span></div>
+        <div class="sr"><span class="sl">完了予定</span><span class="sv ${endColor}">${efmt}（${WD[new Date(o.endDate+'T00:00:00').getDay()]}）${o.alert?' ⚠':''}</span></div>
+        <div class="sr"><span class="sl">発送日</span><span class="sv">${sfmt}　残${wd}稼働日</span></div>
+        <div class="sr"><span class="sl">残工数</span><span class="sv">${remain} h</span></div>
+      </div>`:`<div class="sched-box"><div class="sr"><span class="sl">状態</span><span class="sv ok">作業完了　発送日：${sfmt}</span></div></div>`}
       <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
       <div style="text-align:right;font-size:9px;color:var(--muted);margin-top:2px">進捗 ${pct}%（${o.done||0}h / ${o.hours}h）</div>
-
       <div class="prog-row">
         <label>完了報告</label>
         <input class="pi" type="number" id="pi-${o.id}" placeholder="0" min="0">
-        <span class="pu">h</span>
+        <span style="font-size:11px;color:var(--muted)">h</span>
         <button class="btn-s be" style="flex:0 0 auto;padding:7px 11px" onclick="addProgress('${o.id}')">更新</button>
       </div>
-      ${memoHtml}
+      ${o.memo?`<div class="memo-box">${esc(o.memo)}</div>`:''}
       <div class="actions">
         <button class="btn-s bd" onclick="completeOrder('${o.id}')">✅ 完了</button>
         <button class="btn-s be" onclick="openEdit('${o.id}')">✏ 編集</button>
@@ -482,97 +521,200 @@ function renderList(schd){
       </div>
     </div>`;
   }).join('');
-
-  initDragTouch();
 }
 
-/* --- Gauge / Schedule view --- */
-function renderGauge(schd){
-  const el=document.getElementById('gauge-chart');
+/* --- Schedule Tab --- */
+function renderSchedTab(schd,raw){
+  // 優先順位リスト
+  const pl=document.getElementById('pri-list');
   if(!schd.length){
-    el.innerHTML=`<div class="empty"><span class="empty-icon">📅</span>案件を登録するとスケジュールが表示されます</div>`;
+    pl.innerHTML=`<div class="empty"><span class="empty-icon">📋</span>案件を登録してください</div>`;
+    document.getElementById('day-list').innerHTML='';
     return;
   }
 
-  // 日別に案件を集計
-  const dayMap={}; // date-str → [{name, product, hours}]
-  for(const o of schd){
-    for(const d of (o.scheduledDays||[])){
-      if(!dayMap[d.date]) dayMap[d.date]=[];
-      dayMap[d.date].push({name:o.company, product:o.product, hours:d.hours, alert:o.alert});
-    }
-  }
-
-  const td=today();
-  const dates=Object.keys(dayMap).sort();
-  if(!dates.length){el.innerHTML=`<div class="empty"><span class="empty-icon">✅</span>すべての作業が完了しています</div>`;return;}
-
-  // 今日〜最終日まで稼働日をリスト
-  const end=new Date(dates[dates.length-1]+'T00:00:00');
-  const rows=[];
-  const cur=new Date(td);
-  while(cur<=end && rows.length<30){
-    if(isWorkday(cur)){
-      const ds=toStr(cur);
-      const items=dayMap[ds]||[];
-      const total=items.reduce((s,i)=>s+i.hours,0);
-      rows.push({ds,items,total,wd:cur.getDay()});
-    }
-    cur.setDate(cur.getDate()+1);
-  }
-
-  const tdStr=toStr(td);
-  el.innerHTML=rows.map(r=>{
-    const pct=Math.min(100,Math.round(r.total/HPD*100));
-    const over=r.total>HPD;
-    const color=over?'var(--danger)':r.total>HPD*0.85?'var(--warn)':'var(--ok)';
-    const mm=r.ds.slice(5,7), dd=r.ds.slice(8,10);
-    const isToday=r.ds===tdStr;
-    const itemsHtml=r.items.map(i=>`
-      <div class="g-item">
-        <span class="g-ih">${i.hours.toFixed(1)}h</span>
-        <span class="g-in" style="${i.alert?'color:var(--danger)':''}">${esc(i.name)} / ${esc(i.product)}</span>
-      </div>`).join('');
-    return `<div class="g-card">
-      <div class="g-row">
-        <div class="g-lbl">${mm}/${dd}（${WD[r.wd]}）${isToday?' 🔵':''}</div>
-        <div class="g-val">${r.total.toFixed(1)}h / ${HPD}h</div>
+  pl.innerHTML=schd.map((o,idx)=>`
+    <div class="pri-row ${o.alert?'alert':'ok'}">
+      <div class="pri-num ${idx===0?'p1':''}">${idx+1}</div>
+      <div class="pri-info">
+        <div class="pri-name">${esc(o.company)}　${esc(o.product)}</div>
+        <div class="pri-sub">${o.shipDate.slice(5).replace('-','/')}発送　残${o.hours-(o.done||0)}h　完了予定:${o.endDate.slice(5).replace('-','/')}</div>
       </div>
-      <div class="g-track"><div class="g-fill" style="width:${pct}%;background:${color}"></div></div>
-      <div class="g-sub">${pct}%${over?`　⚠ +${(r.total-HPD).toFixed(1)}h オーバー`:''}</div>
-      <div class="g-items">${itemsHtml}</div>
+      <span class="pri-badge ${o.alert?'pb-alert':'pb-ok'}">${o.alert?'⚠超過':'OK'}</span>
+      <div class="move-btns">
+        <button class="mv" onclick="moveOrder(${idx},${idx-1})" ${idx===0?'disabled':''}>↑</button>
+        <button class="mv" onclick="moveOrder(${idx},${idx+1})" ${idx===schd.length-1?'disabled':''}>↓</button>
+      </div>
+    </div>
+  `).join('');
+
+  // 日別スケジュール
+  const dayMap={};
+  for(const o of schd){
+    for(const d of(o.scheduledDays||[])){
+      if(!dayMap[d.date])dayMap[d.date]=[];
+      dayMap[d.date].push({name:o.company,product:o.product,hours:d.hours,alert:o.alert});
+    }
+  }
+  const dates=Object.keys(dayMap).sort();
+  if(!dates.length){document.getElementById('day-list').innerHTML='';return;}
+
+  const tdStr=toStr(today());
+  document.getElementById('day-list').innerHTML=dates.map(ds=>{
+    const items=dayMap[ds];
+    const total=items.reduce((s,i)=>s+i.hours,0);
+    const cap=capOf(ds);
+    const pct=cap>0?Math.min(100,Math.round(total/cap*100)):100;
+    const over=total>cap;
+    const color=over?'var(--danger)':total>cap*0.85?'var(--warn)':'var(--ok)';
+    const d=new Date(ds+'T00:00:00');
+    const mm=ds.slice(5,7),dd=ds.slice(8,10);
+    const isToday=ds===tdStr;
+    return `<div class="day-card">
+      <div class="day-head">
+        <div class="day-label">${mm}/${dd}（${WD[d.getDay()]}）${isToday?' 🔵':''}</div>
+        <div class="day-val">${total.toFixed(1)}h / ${cap}h</div>
+      </div>
+      <div class="day-track"><div class="day-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="day-sub">${pct}%${over?`　⚠ +${(total-cap).toFixed(1)}h オーバー`:''}</div>
+      <div class="day-items">${items.map(i=>`<div class="di">
+        <span class="di-h">${i.hours.toFixed(1)}h</span>
+        <span class="di-n${i.alert?' alert':''}">${esc(i.name)} / ${esc(i.product)}</span>
+      </div>`).join('')}</div>
     </div>`;
   }).join('');
 }
 
 /* --- Done --- */
 function renderDone(){
-  const done=load(KEY_D).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
+  const done=loadArr(KEY_D).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
   const el=document.getElementById('done-list');
   if(!done.length){el.innerHTML=`<div class="empty"><span class="empty-icon">✅</span>完了済みの案件はありません</div>`;return;}
   el.innerHTML=done.map(o=>{
     const d=new Date(o.completedAt);
-    const cd=`${d.getMonth()+1}/${d.getDate()} 完了`;
     return `<div class="done-card">
       <div class="dn">${esc(o.company)}</div>
       <div class="dp">${esc(o.product)}</div>
-      <div class="dm">発送日: ${o.shipDate.slice(5).replace('-','/')}　工数: ${o.hours}h　${cd}${o.assign?`　担当：${esc(o.assign)}`:''}${o.memo?`<br>${esc(o.memo)}`:''}</div>
+      <div class="dm">発送日: ${o.shipDate.slice(5).replace('-','/')}　${o.hours}h　${d.getMonth()+1}/${d.getDate()}完了${o.assign?`　担当：${esc(o.assign)}`:''}${o.memo?`<br>${esc(o.memo)}`:''}</div>
       <button class="btn-restore" onclick="restoreOrder('${o.id}')">← 一覧に戻す</button>
     </div>`;
   }).join('');
 }
 
+/* ===== CALENDAR RENDER ===== */
+let calYear, calMonth;
+(function(){const t=today();calYear=t.getFullYear();calMonth=t.getMonth();}());
+
+function renderCal(){
+  const t=today();
+  const m=getCalMap();
+  document.getElementById('cal-month').textContent=`${calYear}年 ${calMonth+1}月`;
+
+  const grid=document.getElementById('cal-grid');
+  // header
+  const dows=['日','月','火','水','木','金','土'];
+  let html=dows.map((d,i)=>`<div class="cal-dow${i===0?' sun':i===6?' sat':''}">${d}</div>`).join('');
+
+  const first=new Date(calYear,calMonth,1);
+  const startDow=first.getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const todStr=toStr(t);
+
+  // empty cells before 1st
+  for(let i=0;i<startDow;i++) html+=`<div class="cal-cell empty"></div>`;
+
+  for(let day=1;day<=daysInMonth;day++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const cap=capOf(ds);
+    const isDefault=m[ds]===undefined;
+    const isPast=ds<todStr;
+    const isToday=ds===todStr;
+    const dow=new Date(ds+'T00:00:00').getDay();
+
+    let hClass='cdh h8';
+    let hLabel=`${cap}h`;
+    if(cap===0){hClass='cdh h0';hLabel='休み';}
+    else if(cap<8){hClass='cdh h-low';hLabel=`${cap}h`;}
+
+    const pastClass=isPast&&!isToday?' past':'';
+    const todClass=isToday?' today':'';
+    const clickAttr=isPast&&!isToday?'':'onclick="openCalModal(\''+ds+'\')"';
+
+    html+=`<div class="cal-cell${pastClass}${todClass}" ${clickAttr}>
+      <span class="cdn" style="${dow===0?'color:#e87070':dow===6?'color:#6090e8':''}">${day}</span>
+      <span class="${hClass}">${hLabel}${!isDefault?'*':''}</span>
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
+
+/* --- Cal Modal --- */
+let calModalDs=null;
+const HOUR_OPTIONS=[null,0,1,2,3,4,5,6,7,8]; // null=既定
+
+function openCalModal(ds){
+  calModalDs=ds;
+  const d=new Date(ds+'T00:00:00');
+  document.getElementById('cm-date').textContent=
+    `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）`;
+
+  const cur=getCalMap()[ds];
+  const defCap=defaultCap(d);
+
+  let html='';
+  // 既定ボタン
+  const isDefault=cur===undefined;
+  html+=`<button class="hour-btn${isDefault?' sel':''}" onclick="setCapAndClose(null)">既定<br><span style="font-size:10px;font-weight:400">${defCap}h</span></button>`;
+  // 0h(休み)
+  const is0=cur===0;
+  html+=`<button class="hour-btn h0${is0?' sel':''}" onclick="setCapAndClose(0)">休み<br><span style="font-size:10px">0h</span></button>`;
+  // 1〜8h
+  for(let h=1;h<=8;h++){
+    const isSel=cur===h;
+    html+=`<button class="hour-btn${isSel?' sel':''}" onclick="setCapAndClose(${h})">${h}h</button>`;
+  }
+  document.getElementById('hour-btns').innerHTML=html;
+  document.getElementById('cal-modal-bg').classList.add('on');
+}
+
+function setCapAndClose(h){
+  if(calModalDs){
+    setCalDay(calModalDs,h);
+    renderAll();
+    toast(h===null?'既定に戻しました':`${calModalDs.slice(5).replace('-','/')} → ${h===0?'休み':h+'h'} に設定`);
+  }
+  closeCalModal();
+}
+
+function closeCalModal(){
+  document.getElementById('cal-modal-bg').classList.remove('on');
+  calModalDs=null;
+}
+
 /* ===== ACTIONS ===== */
+function moveOrder(from,to){
+  const orders=loadArr(KEY_A);
+  if(to<0||to>=orders.length)return;
+  const[item]=orders.splice(from,1);
+  orders.splice(to,0,item);
+  save(KEY_A,orders);
+  renderAll();
+}
+
 function addOrder(){
-  const company =document.getElementById('f-company').value.trim();
-  const product =document.getElementById('f-product').value.trim();
-  const assign  =document.getElementById('f-assign').value.trim();
+  const company=document.getElementById('f-company').value.trim();
+  const product=document.getElementById('f-product').value.trim();
+  const assign =document.getElementById('f-assign').value.trim();
   const shipDate=document.getElementById('f-date').value;
-  const hours   =parseInt(document.getElementById('f-hours').value)||0;
-  const memo    =document.getElementById('f-memo').value.trim();
+  const hours  =parseInt(document.getElementById('f-hours').value)||0;
+  const memo   =document.getElementById('f-memo').value.trim();
   if(!company||!product||!shipDate||hours<1){toast('⚠ 必須項目を入力してください');return;}
-  const orders=load(KEY_A);
+  const orders=loadArr(KEY_A);
   orders.push({id:uid(),company,product,assign,shipDate,hours,done:0,memo,createdAt:new Date().toISOString()});
+  orders.sort((a,b)=>a.shipDate.localeCompare(b.shipDate));
   save(KEY_A,orders);
   ['f-company','f-product','f-assign','f-hours','f-memo'].forEach(id=>document.getElementById(id).value='');
   go('list');renderAll();toast('✅ 登録しました');
@@ -582,7 +724,7 @@ function addProgress(id){
   const inp=document.getElementById(`pi-${id}`);
   const add=parseFloat(inp.value)||0;
   if(add<=0){toast('完了時間を入力してください');return;}
-  const orders=load(KEY_A);
+  const orders=loadArr(KEY_A);
   const o=orders.find(x=>x.id===id);
   if(!o)return;
   o.done=Math.min(o.hours,(o.done||0)+add);
@@ -591,36 +733,51 @@ function addProgress(id){
 }
 
 function completeOrder(id){
-  const orders=load(KEY_A);
+  const orders=loadArr(KEY_A);
   const idx=orders.findIndex(o=>o.id===id);
   if(idx<0)return;
   const[o]=orders.splice(idx,1);
   o.completedAt=new Date().toISOString();
-  const done=load(KEY_D);done.push(o);
+  const done=loadArr(KEY_D);done.push(o);
   save(KEY_A,orders);save(KEY_D,done);
   renderAll();toast('✅ 完了済みに移動しました');
 }
 
+let pendingDeleteId=null;
 function deleteOrder(id){
-  if(!confirm('この案件を削除しますか？'))return;
-  save(KEY_A,load(KEY_A).filter(o=>o.id!==id));
+  const orders=loadArr(KEY_A);
+  const o=orders.find(x=>x.id===id);
+  if(!o)return;
+  pendingDeleteId=id;
+  document.getElementById('del-modal-msg').textContent=`「${o.company} / ${o.product}」を削除します。この操作は元に戻せません。`;
+  document.getElementById('del-modal-bg').classList.add('on');
+}
+function confirmDelete(){
+  if(!pendingDeleteId)return;
+  save(KEY_A,loadArr(KEY_A).filter(o=>o.id!==pendingDeleteId));
+  pendingDeleteId=null;
+  closeDelModal();
   renderAll();toast('🗑 削除しました');
+}
+function closeDelModal(){
+  document.getElementById('del-modal-bg').classList.remove('on');
+  pendingDeleteId=null;
 }
 
 function restoreOrder(id){
-  const done=load(KEY_D);
+  const done=loadArr(KEY_D);
   const idx=done.findIndex(o=>o.id===id);
   if(idx<0)return;
   const[o]=done.splice(idx,1);
   delete o.completedAt;
-  const orders=load(KEY_A);orders.push(o);
+  const orders=loadArr(KEY_A);orders.push(o);
   save(KEY_A,orders);save(KEY_D,done);
   renderAll();toast('↩ 一覧に戻しました');
 }
 
 /* ===== EDIT MODAL ===== */
 function openEdit(id){
-  const o=load(KEY_A).find(x=>x.id===id);
+  const o=loadArr(KEY_A).find(x=>x.id===id);
   if(!o)return;
   document.getElementById('e-id').value=o.id;
   document.getElementById('e-company').value=o.company;
@@ -631,7 +788,7 @@ function openEdit(id){
   document.getElementById('e-memo').value=o.memo||'';
   document.getElementById('modal-bg').classList.add('on');
 }
-function closeModal(e){
+function closeEditModal(e){
   if(!e||e.target===document.getElementById('modal-bg'))
     document.getElementById('modal-bg').classList.remove('on');
 }
@@ -644,117 +801,20 @@ function saveEdit(){
   const hours=parseInt(document.getElementById('e-hours').value)||0;
   const memo=document.getElementById('e-memo').value.trim();
   if(!company||!product||!shipDate||hours<1){toast('⚠ 必須項目を入力してください');return;}
-  const orders=load(KEY_A);
+  const orders=loadArr(KEY_A);
   const o=orders.find(x=>x.id===id);
   if(!o)return;
   Object.assign(o,{company,product,assign,shipDate,hours,memo});
-  save(KEY_A,orders);closeModal();renderAll();toast('💾 保存しました');
-}
-
-/* ===== DRAG & DROP (mouse + touch) ===== */
-let dragSrcIdx = null;
-let touchDragEl = null;
-let touchGhost  = null;
-
-function dragStart(e){
-  dragSrcIdx = parseInt(e.currentTarget.dataset.idx);
-  e.dataTransfer.effectAllowed='move';
-  setTimeout(()=>e.currentTarget.classList.add('dragging'),0);
-}
-function dragOver(e){
-  e.preventDefault();
-  e.dataTransfer.dropEffect='move';
-  document.querySelectorAll('.ocard').forEach(c=>c.classList.remove('drag-over'));
-  e.currentTarget.classList.add('drag-over');
-}
-function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
-function dragDrop(e){
-  e.preventDefault();
-  const toIdx=parseInt(e.currentTarget.dataset.idx);
-  if(dragSrcIdx===null||dragSrcIdx===toIdx)return;
-  moveOrder(dragSrcIdx,toIdx);
-}
-function dragEnd(e){
-  e.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.ocard').forEach(c=>c.classList.remove('drag-over','dragging'));
-  dragSrcIdx=null;
-}
-
-function moveOrder(from,to){
-  const orders=load(KEY_A);
-  const [item]=orders.splice(from,1);
-  orders.splice(to,0,item);
   save(KEY_A,orders);
-  renderAll();toast('🔀 順序を変更しました');
-}
-
-/* Touch drag for mobile */
-function initDragTouch(){
-  document.querySelectorAll('.drag-handle').forEach(handle=>{
-    handle.addEventListener('touchstart',touchStart,{passive:false});
-  });
-}
-
-let touchSrcIdx=null, touchOverIdx=null;
-
-function touchStart(e){
-  e.preventDefault();
-  const card=e.currentTarget.closest('.ocard');
-  touchSrcIdx=parseInt(card.dataset.idx);
-
-  // ghost
-  touchGhost=card.cloneNode(true);
-  const r=card.getBoundingClientRect();
-  touchGhost.style.cssText=`
-    position:fixed;top:${r.top}px;left:${r.left}px;width:${r.width}px;
-    opacity:.85;pointer-events:none;z-index:500;border:2px solid var(--accent);
-    border-radius:var(--r);transform:scale(1.02);transition:top .05s;
-  `;
-  document.body.appendChild(touchGhost);
-  card.classList.add('dragging');
-
-  document.addEventListener('touchmove',touchMove,{passive:false});
-  document.addEventListener('touchend',touchEnd);
-}
-
-function touchMove(e){
-  e.preventDefault();
-  const t=e.touches[0];
-  if(touchGhost) touchGhost.style.top=(t.clientY-40)+'px';
-
-  // find card under touch
-  touchGhost.style.display='none';
-  const under=document.elementFromPoint(t.clientX,t.clientY);
-  touchGhost.style.display='';
-  const overCard=under?.closest('.ocard');
-  document.querySelectorAll('.ocard').forEach(c=>c.classList.remove('drag-over'));
-  if(overCard&&overCard.dataset.idx!==undefined){
-    touchOverIdx=parseInt(overCard.dataset.idx);
-    if(touchOverIdx!==touchSrcIdx) overCard.classList.add('drag-over');
-  }
-}
-
-function touchEnd(){
-  if(touchGhost){touchGhost.remove();touchGhost=null;}
-  document.querySelectorAll('.ocard').forEach(c=>c.classList.remove('dragging','drag-over'));
-  document.removeEventListener('touchmove',touchMove);
-  document.removeEventListener('touchend',touchEnd);
-  if(touchSrcIdx!==null&&touchOverIdx!==null&&touchSrcIdx!==touchOverIdx){
-    moveOrder(touchSrcIdx,touchOverIdx);
-  }
-  touchSrcIdx=null;touchOverIdx=null;
+  closeEditModal();renderAll();toast('💾 保存しました');
 }
 
 /* ===== CSV ===== */
 function exportCSV(type){
-  const data=type==='done'?load(KEY_D):load(KEY_A);
+  const data=type==='done'?loadArr(KEY_D):loadArr(KEY_A);
   if(!data.length){toast('データがありません');return;}
   const rows=[['優先順位','会社名','製品名','担当者','発送日','必要時間(h)','完了済(h)','メモ','登録日','完了日']];
-  data.forEach((o,i)=>rows.push([
-    i+1,o.company,o.product,o.assign||'',o.shipDate,
-    o.hours,o.done||0,(o.memo||'').replace(/\n/g,' '),
-    (o.createdAt||'').slice(0,10),(o.completedAt||'').slice(0,10)
-  ]));
+  data.forEach((o,i)=>rows.push([i+1,o.company,o.product,o.assign||'',o.shipDate,o.hours,o.done||0,(o.memo||'').replace(/\n/g,' '),(o.createdAt||'').slice(0,10),(o.completedAt||'').slice(0,10)]));
   const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
@@ -763,7 +823,7 @@ function exportCSV(type){
 }
 
 /* ===== TAB ===== */
-const TABS=['list','gauge','add','done'];
+const TABS=['list','sched','cal','add','done'];
 function go(name){
   TABS.forEach((t,i)=>{
     document.getElementById(`pane-${t}`).classList.toggle('on',t===name);
@@ -785,7 +845,7 @@ function toast(msg){
   const d=new Date();d.setDate(d.getDate()+1);
   document.getElementById('f-date').value=d.toISOString().slice(0,10);
   renderAll();
-})();
+}());
 </script>
 </body>
 </html>
