@@ -274,6 +274,13 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14
       <button class="btn-csv" onclick="exportCSV('active')">📥 案件CSV</button>
       <button class="btn-csv" onclick="exportCSV('done')">📥 完了CSV</button>
     </div>
+    <div class="csv-row">
+      <button class="btn-csv" onclick="exportJSON()">💾 JSONバックアップ</button>
+      <label class="btn-csv" style="cursor:pointer;">
+        📂 JSON読み込み
+        <input type="file" id="json-input" accept=".json" style="display:none" onchange="importJSON(event)">
+      </label>
+    </div>
     <div id="done-list"></div>
   </div>
 
@@ -305,6 +312,20 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 14
     <div class="field"><label>メモ</label><textarea id="e-memo"></textarea></div>
     <button class="btn-submit" onclick="saveEdit()">保存する</button>
     <button class="btn-cancel" onclick="closeEditModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- 完了確認モーダル（実工数入力） -->
+<div class="cal-modal-bg" id="comp-modal-bg">
+  <div class="cal-modal">
+    <h3 style="color:var(--ok)">✅ 完了登録</h3>
+    <div class="cm-date" id="comp-modal-msg" style="margin-bottom:14px;line-height:1.7;"></div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>実際にかかった時間（h）*</label>
+      <input type="number" id="comp-actual" min="0.5" step="0.5" placeholder="例：6.5" style="width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;color:var(--text);font-size:18px;padding:10px 12px;outline:none;-moz-appearance:textfield;text-align:center;">
+    </div>
+    <button class="btn-submit" style="background:var(--ok);margin-bottom:10px;" onclick="confirmComplete()">完了にする</button>
+    <button class="btn-cm-close" onclick="closeCompModal()">キャンセル</button>
   </div>
 </div>
 
@@ -595,7 +616,7 @@ function renderDone(){
     return `<div class="done-card">
       <div class="dn">${esc(o.company)}</div>
       <div class="dp">${esc(o.product)}</div>
-      <div class="dm">発送日: ${o.shipDate.slice(5).replace('-','/')}　${o.hours}h　${d.getMonth()+1}/${d.getDate()}完了${o.assign?`　担当：${esc(o.assign)}`:''}${o.memo?`<br>${esc(o.memo)}`:''}</div>
+      <div class="dm">発送日: ${o.shipDate.slice(5).replace('-','/')}　予想:${o.hours}h${o.actualHours!=null?`　実績:${o.actualHours}h`:''}　${d.getMonth()+1}/${d.getDate()}完了${o.assign?`　担当：${esc(o.assign)}`:''}${o.memo?`<br>${esc(o.memo)}`:''}</div>
       <button class="btn-restore" onclick="restoreOrder('${o.id}')">← 一覧に戻す</button>
     </div>`;
   }).join('');
@@ -713,8 +734,13 @@ function addOrder(){
   const memo   =document.getElementById('f-memo').value.trim();
   if(!company||!product||!shipDate||hours<1){toast('⚠ 必須項目を入力してください');return;}
   const orders=loadArr(KEY_A);
-  orders.push({id:uid(),company,product,assign,shipDate,hours,done:0,memo,createdAt:new Date().toISOString()});
-  orders.sort((a,b)=>a.shipDate.localeCompare(b.shipDate));
+  const newOrder={id:uid(),company,product,assign,shipDate,hours,done:0,memo,createdAt:new Date().toISOString()};
+  // 納期順の挿入位置を探して差し込む（既存の順序は動かさない）
+  let insertIdx=orders.length;
+  for(let i=0;i<orders.length;i++){
+    if(orders[i].shipDate>shipDate){insertIdx=i;break;}
+  }
+  orders.splice(insertIdx,0,newOrder);
   save(KEY_A,orders);
   ['f-company','f-product','f-assign','f-hours','f-memo'].forEach(id=>document.getElementById(id).value='');
   go('list');renderAll();toast('✅ 登録しました');
@@ -732,15 +758,37 @@ function addProgress(id){
   renderAll();toast(`＋${add}h 進捗を更新`);
 }
 
+let pendingCompleteId=null;
 function completeOrder(id){
   const orders=loadArr(KEY_A);
-  const idx=orders.findIndex(o=>o.id===id);
+  const o=orders.find(x=>x.id===id);
+  if(!o)return;
+  pendingCompleteId=id;
+  document.getElementById('comp-modal-msg').textContent=
+    `${o.company} / ${o.product}\n予想工数：${o.hours}h`;
+  document.getElementById('comp-actual').value=o.hours;
+  document.getElementById('comp-modal-bg').classList.add('on');
+  setTimeout(()=>document.getElementById('comp-actual').focus(),100);
+}
+function confirmComplete(){
+  if(!pendingCompleteId)return;
+  const actual=parseFloat(document.getElementById('comp-actual').value);
+  if(!actual||actual<=0){toast('⚠ 実工数を入力してください');return;}
+  const orders=loadArr(KEY_A);
+  const idx=orders.findIndex(o=>o.id===pendingCompleteId);
   if(idx<0)return;
   const[o]=orders.splice(idx,1);
+  o.actualHours=actual;
   o.completedAt=new Date().toISOString();
   const done=loadArr(KEY_D);done.push(o);
   save(KEY_A,orders);save(KEY_D,done);
+  pendingCompleteId=null;
+  closeCompModal();
   renderAll();toast('✅ 完了済みに移動しました');
+}
+function closeCompModal(){
+  document.getElementById('comp-modal-bg').classList.remove('on');
+  pendingCompleteId=null;
 }
 
 let pendingDeleteId=null;
@@ -813,13 +861,79 @@ function saveEdit(){
 function exportCSV(type){
   const data=type==='done'?loadArr(KEY_D):loadArr(KEY_A);
   if(!data.length){toast('データがありません');return;}
-  const rows=[['優先順位','会社名','製品名','担当者','発送日','必要時間(h)','完了済(h)','メモ','登録日','完了日']];
-  data.forEach((o,i)=>rows.push([i+1,o.company,o.product,o.assign||'',o.shipDate,o.hours,o.done||0,(o.memo||'').replace(/\n/g,' '),(o.createdAt||'').slice(0,10),(o.completedAt||'').slice(0,10)]));
+  const rows=[['優先順位','会社名','製品名','担当者','発送日','予想工数(h)','実工数(h)','進捗(h)','メモ','登録日','完了日']];
+  data.forEach((o,i)=>rows.push([
+    i+1,o.company,o.product,o.assign||'',o.shipDate,
+    o.hours,
+    o.actualHours!=null?o.actualHours:'',
+    o.done||0,
+    (o.memo||'').replace(/\n/g,' '),
+    (o.createdAt||'').slice(0,10),
+    (o.completedAt||'').slice(0,10)
+  ]));
   const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download=`schedule-${type}-${toStr(new Date())}.csv`;
   a.click();toast('📥 CSVをダウンロード');
+}
+
+/* ===== JSON バックアップ ===== */
+function exportJSON(){
+  const data={
+    version:1,
+    exportedAt:new Date().toISOString(),
+    orders:loadArr(KEY_A),
+    done:loadArr(KEY_D),
+    calendar:load(KEY_CAL)||{}
+  };
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download=`load-manager-backup-${toStr(new Date())}.json`;
+  a.click();toast('💾 JSONをバックアップしました');
+}
+
+function importJSON(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.version||!Array.isArray(data.orders)){
+        toast('⚠ このファイルは対応していません');return;
+      }
+      // 上書き前に件数確認
+      const msg=`バックアップを読み込みます。\n現在の案件${loadArr(KEY_A).length}件・完了${loadArr(KEY_D).length}件は上書きされます。\n\n読み込み内容：案件${data.orders.length}件・完了${data.done?.length||0}件`;
+      // confirmが使えないのでカスタム処理
+      pendingImportData=data;
+      document.getElementById('del-modal-msg').innerHTML=
+        `バックアップを読み込みます。<br>現在のデータは上書きされます。<br><br>読み込み：案件 <b>${data.orders.length}件</b>・完了 <b>${data.done?.length||0}件</b>`;
+      document.getElementById('del-modal-bg').classList.add('on');
+      // 削除ボタンを「読み込む」に一時変更
+      const btn=document.querySelector('#del-modal-bg .btn-submit');
+      btn.textContent='読み込む';
+      btn.onclick=doImport;
+    }catch{toast('⚠ JSONの読み込みに失敗しました');}
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+let pendingImportData=null;
+function doImport(){
+  if(!pendingImportData)return;
+  const data=pendingImportData;
+  save(KEY_A,data.orders||[]);
+  save(KEY_D,data.done||[]);
+  if(data.calendar) save(KEY_CAL,data.calendar);
+  pendingImportData=null;
+  // ボタンを元に戻す
+  const btn=document.querySelector('#del-modal-bg .btn-submit');
+  btn.textContent='削除する';
+  btn.onclick=confirmDelete;
+  closeDelModal();
+  renderAll();toast(`📂 読み込み完了：案件${data.orders.length}件`);
 }
 
 /* ===== TAB ===== */
